@@ -1,4 +1,4 @@
-import { Injectable, TooManyRequestsException, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomInt } from 'node:crypto';
@@ -19,7 +19,7 @@ export class AuthService {
     const rateKey = `otp-rate:${phone}`;
     const attempts = await this.redis.client.incr(rateKey);
     if (attempts === 1) await this.redis.client.expire(rateKey, 15 * 60);
-    if (attempts > 5) throw new TooManyRequestsException('Слишком много запросов OTP');
+    if (attempts > 5) throw new HttpException('Слишком много запросов OTP', HttpStatus.TOO_MANY_REQUESTS);
 
     const code = randomInt(100000, 1000000).toString();
     const ttl = this.config.get<number>('OTP_TTL_SECONDS', 300);
