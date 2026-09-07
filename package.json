@@ -1,0 +1,17 @@
+{
+  "name": "dolg-kz",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently -n web,api -c auto \"npm run dev -w @dolg/web\" \"npm run start:dev -w @dolg/api\"",
+    "build": "npm run build -w @dolg/api && npm run build -w @dolg/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "db:generate": "npm run prisma:generate -w @dolg/api",
+    "db:migrate": "npm run prisma:migrate -w @dolg/api",
+    "db:studio": "npm run prisma:studio -w @dolg/api"
+  },
+  "devDependencies": {"concurrently":"^9.2.1","prettier":"^3.6.2"},
+  "engines": {"node":">=22.12.0","npm":">=10.0.0"}
+}
