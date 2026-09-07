@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
-import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { CreateLoanDto } from './dto/create-loan.dto';
-import { UpdateLoanDto } from './dto/update-loan.dto';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
+import { CreateLoanDto } from './dto/create-loan.dto.js';
+import { UpdateLoanDto } from './dto/update-loan.dto.js';
 
 @Injectable()
 export class LoansService {
