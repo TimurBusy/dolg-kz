@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# env
+.env
+.env.*
+!.env.example
+
+# builds
+.next/
+dist/
+coverage/
+
+# prisma
+apps/api/prisma/dev.db
+
+# logs
+*.log
+npm-debug.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# misc
+*.tsbuildinfo
