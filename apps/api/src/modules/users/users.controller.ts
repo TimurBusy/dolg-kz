@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator';
-import { AccessTokenGuard } from '../../common/guards/access-token.guard';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UsersService } from './users.service';
+import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
+import { AccessTokenGuard } from '../../common/guards/access-token.guard.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
+import { UsersService } from './users.service.js';
 
 @ApiTags('me')
 @ApiBearerAuth()
