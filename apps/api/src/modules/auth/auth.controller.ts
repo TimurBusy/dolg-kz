@@ -1,10 +1,10 @@
 import { Body, Controller, Headers, Ip, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { LogoutDto } from './dto/logout.dto';
-import { RefreshDto } from './dto/refresh.dto';
-import { RequestOtpDto } from './dto/request-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { AuthService } from './auth.service.js';
+import { LogoutDto } from './dto/logout.dto.js';
+import { RefreshDto } from './dto/refresh.dto.js';
+import { RequestOtpDto } from './dto/request-otp.dto.js';
+import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 
 @ApiTags('auth')
 @Controller('auth')
