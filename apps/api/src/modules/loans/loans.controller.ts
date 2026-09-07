@@ -1,10 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator';
-import { AccessTokenGuard } from '../../common/guards/access-token.guard';
-import { CreateLoanDto } from './dto/create-loan.dto';
-import { UpdateLoanDto } from './dto/update-loan.dto';
-import { LoansService } from './loans.service';
+import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
+import { AccessTokenGuard } from '../../common/guards/access-token.guard.js';
+import { CreateLoanDto } from './dto/create-loan.dto.js';
+import { UpdateLoanDto } from './dto/update-loan.dto.js';
+import { LoansService } from './loans.service.js';
 
 @ApiTags('loans')
 @ApiBearerAuth()
