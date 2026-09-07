@@ -2,8 +2,8 @@ import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@n
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomInt } from 'node:crypto';
-import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { RedisService } from '../../infrastructure/redis/redis.service';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
+import { RedisService } from '../../infrastructure/redis/redis.service.js';
 
 @Injectable()
 export class AuthService {
