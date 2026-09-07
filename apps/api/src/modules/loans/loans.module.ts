@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
-import { AccessTokenGuard } from '../../common/guards/access-token.guard';
-import { LoansController } from './loans.controller';
-import { LoansService } from './loans.service';
+import { AuthModule } from '../auth/auth.module.js';
+import { AccessTokenGuard } from '../../common/guards/access-token.guard.js';
+import { LoansController } from './loans.controller.js';
+import { LoansService } from './loans.service.js';
 
 @Module({
   imports: [AuthModule],
