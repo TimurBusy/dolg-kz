@@ -33,7 +33,7 @@ export class LoansService {
   async list(userId: string, filter?: string) {
     const statusFilter = this.statusFilter(filter);
     const loans = await this.prisma.loan.findMany({
-      where: { AND: [{ OR: [{ lenderId: userId }, { borrowerId: userId }] }, ...(statusFilter ? [{ status: { in: statusFilter } }] : [])] },
+      where: { AND: [{ OR: [{ lenderId: userId }, { borrowerId: userId }] }, ...(statusFilter ? [{ status: { in: [...statusFilter] } }] : [])] },
       include: this.include(),
       orderBy: { createdAt: 'desc' },
     });
