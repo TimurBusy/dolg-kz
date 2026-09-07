@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
 
 @Injectable()
 export class UsersService {
