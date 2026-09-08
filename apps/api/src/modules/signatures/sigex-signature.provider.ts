@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  AdditionalSigningCompletion,
   AdditionalSigningLaunch,
   AdditionalSigningStatus,
   FirstSigningCompletion,
@@ -152,24 +153,105 @@ export class SigexSignatureProvider extends SignatureProviderPort {
     backUrl: string;
     meta: SigningMeta;
   }): Promise<AdditionalSigningLaunch> {
-    const response = await this.json(
-      `${this.baseUrl}/api/${encodeURIComponent(input.providerDocumentId)}/egovQr`,
+    // Use the basic eGov QR flow here instead of SIGEX's simplified
+    // /api/{id}/egovQr endpoint. The simplified endpoint may be unavailable
+    // depending on account capabilities, while the base flow works for
+    // obtaining a CMS signature that can then be attached to the existing
+    // registered document.
+    const response = await this.json(`${this.baseUrl}/api/egovQr`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: input.description,
+        whenDone: { backUrl: input.backUrl },
+      }),
+    });
+
+    const dataUrl = this.safeSigexUrl(response.dataURLAuto ?? response.dataURL);
+    const signUrl = this.safeSigexUrl(response.signURLAuto ?? response.signURL);
+
+    return {
+      expireAt: new Date(Number(response.expireAt)),
+      qrCode: String(response.qrCode),
+      launchLink: String(response.eGovMobileLaunchLink),
+      context: { dataUrl, signUrl },
+    };
+  }
+
+  async completeAdditionalOperation(input: {
+    context: AdditionalSigningLaunch['context'];
+    file: Buffer;
+    providerDocumentId: string;
+    title: string;
+    meta: SigningMeta;
+    expectedSignerIin: string;
+  }): Promise<AdditionalSigningCompletion> {
+    await this.json(
+      this.safeSigexUrl(input.context.dataUrl),
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          description: input.description,
-          meta: input.meta,
-          whenDone: { backUrl: input.backUrl },
+          signMethod: 'CMS_SIGN_ONLY',
+          documentsToSign: [
+            {
+              id: 1,
+              nameRu: input.title,
+              nameKz: 'Қарыз шарты',
+              nameEn: 'Loan agreement',
+              meta: input.meta,
+              document: {
+                file: {
+                  mime: '@file/pdf',
+                  data: input.file.toString('base64'),
+                },
+              },
+            },
+          ],
+        }),
+      },
+      10 * 60 * 1000,
+    );
+
+    const signed = await this.json(
+      this.safeSigexUrl(input.context.signUrl),
+      { method: 'GET' },
+      10 * 60 * 1000,
+    );
+
+    if (String(signed.status ?? '').toUpperCase() === 'CANCELED') {
+      return { status: 'CANCELED' };
+    }
+
+    const signature = signed.documentsToSign?.[0]?.document?.file?.data;
+    if (!signature || typeof signature !== 'string') {
+      throw new Error('SIGEX/eGov не вернул CMS подпись заёмщика');
+    }
+
+    const registration = await this.json(
+      `${this.baseUrl}/api/${encodeURIComponent(input.providerDocumentId)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signType: 'cms',
+          signature,
         }),
       },
     );
 
+    const providerSignId = Number(registration.signId);
+    if (!Number.isFinite(providerSignId)) {
+      throw new Error('SIGEX не вернул идентификатор подписи заёмщика');
+    }
+
+    // The document was registered with strict + sequential signer requirements,
+    // so SIGEX rejects a signature that does not belong to the expected second
+    // signer. A successful registration therefore confirms the borrower IIN.
     return {
-      operationId: String(response.operationId),
-      expireAt: new Date(Number(response.expireAt)),
-      qrCode: String(response.qrCode),
-      launchLink: String(response.eGovMobileLaunchLink),
+      status: 'SIGNED',
+      providerSignId,
+      signerIin: input.expectedSignerIin,
     };
   }
 
