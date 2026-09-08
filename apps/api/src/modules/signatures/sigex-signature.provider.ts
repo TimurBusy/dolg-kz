@@ -242,13 +242,14 @@ export class SigexSignatureProvider extends SignatureProviderPort {
   }
 
   private async binary(url: string, data: Buffer) {
+    const body = Uint8Array.from(data);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Content-Length': String(data.length),
+        'Content-Length': String(body.byteLength),
       },
-      body: data,
+      body,
       signal: AbortSignal.timeout(60_000),
     });
     const body = await response.json().catch(() => null);
