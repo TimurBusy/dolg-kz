@@ -35,9 +35,11 @@ export default function InvitationPage() {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
+  const [hasAuth, setHasAuth] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    setHasAuth(Boolean(getAuth()));
     api<Invitation>(`/invitations/${token}`)
       .then(setInvitation)
       .catch((requestError) =>
@@ -149,7 +151,7 @@ export default function InvitationPage() {
                         <Loader2 className="mr-2 animate-spin" size={16} />
                         Принимаем…
                       </>
-                    ) : getAuth() ? (
+                    ) : hasAuth ? (
                       'Принять приглашение'
                     ) : (
                       'Войти и принять'
