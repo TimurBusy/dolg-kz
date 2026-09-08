@@ -129,7 +129,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
     );
 
     const document = await this.json(
-      `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}`,
+      `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}?lastSignId=0`,
       { method: 'GET' },
     );
     const registeredSignature =
@@ -137,9 +137,9 @@ export class SigexSignatureProvider extends SignatureProviderPort {
         (item: Json) => Number(item.signId) === providerSignId,
       ) ?? document.signatures?.[0];
 
-    const signerIin = this.normalizeIin(registeredSignature?.userId);
+    const signerIin = this.extractSignerIin(registeredSignature);
     if (!signerIin) {
-      throw new Error('SIGEX не вернул ИИН первого подписанта');
+      throw new Error('SIGEX не вернул распознаваемый ИИН первого подписанта');
     }
 
     return {
@@ -273,6 +273,32 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       throw new Error('SIGEX вернул недоверенный URL операции');
     }
     return url.toString();
+  }
+
+  private extractSignerIin(signature: Json | undefined) {
+    if (!signature) return undefined;
+
+    const direct = this.normalizeIin(signature.userId);
+    if (direct) return direct;
+
+    if (typeof signature.subject === 'string') {
+      const match = signature.subject.match(/IIN\D*(\d{12})/i);
+      if (match?.[1]) return match[1];
+    }
+
+    if (Array.isArray(signature.subjectStructure)) {
+      for (const group of signature.subjectStructure) {
+        if (!Array.isArray(group)) continue;
+        for (const item of group) {
+          const name = String(item?.name ?? '').toUpperCase();
+          if (name !== 'SERIALNUMBER' && name !== 'SERIALINUMBER') continue;
+          const fromStructure = this.normalizeIin(item?.value);
+          if (fromStructure) return fromStructure;
+        }
+      }
+    }
+
+    return undefined;
   }
 
   private normalizeIin(value: unknown) {
