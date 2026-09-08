@@ -5,6 +5,8 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { LoansModule } from './modules/loans/loans.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
+import { InvitationsModule } from './modules/invitations/invitations.module.js';
+import { SignaturesModule } from './modules/signatures/signatures.module.js';
 import { PrismaModule } from './infrastructure/prisma/prisma.module.js';
 import { RedisModule } from './infrastructure/redis/redis.module.js';
 
@@ -18,6 +20,8 @@ import { RedisModule } from './infrastructure/redis/redis.module.js';
     UsersModule,
     LoansModule,
     DocumentsModule,
+    InvitationsModule,
+    SignaturesModule,
   ],
 })
 export class AppModule {}
