@@ -2,7 +2,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { Injectable } from '@nestjs/common';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
-import { PDFDocument, PDFFont, PDFPage, rgb } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 
 type AgreementParty = {
   fullName: string;
