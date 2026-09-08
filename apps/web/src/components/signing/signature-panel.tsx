@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, Loader2, Smartphone } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -145,7 +146,10 @@ export function SignaturePanel({
         { method: 'POST' },
         auth.accessToken,
       );
-      setSignatures((current) => [...current, signature]);
+      setSignatures((current) => [
+        ...current.filter((item) => item.id !== signature.id),
+        signature,
+      ]);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -219,9 +223,12 @@ export function SignaturePanel({
         <div className="mt-5 grid gap-5 rounded-2xl border border-[var(--border)] p-5 md:grid-cols-[220px_1fr]">
           <div className="flex items-center justify-center rounded-xl bg-white p-3">
             {active.qrCode ? (
-              <img
+              <Image
                 src={`data:image/png;base64,${active.qrCode}`}
                 alt="QR для подписания через eGov Mobile"
+                width={192}
+                height={192}
+                unoptimized
                 className="h-48 w-48"
               />
             ) : (
