@@ -17,9 +17,8 @@ export class SigexSignatureProvider extends SignatureProviderPort {
 
   constructor(private readonly config: ConfigService) {
     super();
-    this.baseUrl = this.config
-      .get<string>('SIGEX_BASE_URL', 'https://sigex.kz')
-      .replace(/\/$/, '');
+    const configuredBaseUrl = this.config.get<string>('SIGEX_BASE_URL')?.trim();
+    this.baseUrl = (configuredBaseUrl || 'https://sigex.kz').replace(/\/$/, '');
   }
 
   async createFirstOperation(input: {
