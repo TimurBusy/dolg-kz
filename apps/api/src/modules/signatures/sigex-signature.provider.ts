@@ -123,36 +123,19 @@ export class SigexSignatureProvider extends SignatureProviderPort {
     const providerDocumentId = String(registration.documentId);
     const providerSignId = Number(registration.signId);
 
-    const dataRegistration = await this.binary(
+    await this.binary(
       `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}/data`,
       input.file,
     );
 
-    // According to SIGEX docs, the first block of signatures must be requested
-    // without lastSignId. Passing lastSignId=0 can skip the first signature on
-    // deployments where the first signId is zero.
-    const document = await this.json(
-      `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}`,
-      { method: 'GET' },
-    );
-    const signatures = Array.isArray(document.signatures) ? document.signatures : [];
-    const registeredSignature =
-      signatures.find(
-        (item: Json) => Number(item.signId) === providerSignId,
-      ) ?? signatures[0];
-
-    const signerIin =
-      this.extractSignerIin(registeredSignature) ??
-      this.normalizeIin(registration.automaticallyCreatedUserSettings?.userId) ??
-      this.normalizeIin(dataRegistration.automaticallyCreatedUserSettings?.userId);
-
+    // The document is registered with strict + sequential signer requirements.
+    // SIGEX validates the first CMS signature against signerIins[0] before
+    // accepting registration, so a successful POST /api is authoritative here.
+    // Reading signature metadata back anonymously is unreliable for private
+    // documents and is not required for enforcing the lender IIN.
+    const signerIin = input.signerIins[0];
     if (!signerIin) {
-      const signatureFields = registeredSignature
-        ? Object.keys(registeredSignature).sort().join(',')
-        : 'none';
-      throw new Error(
-        `SIGEX не вернул распознаваемый ИИН первого подписанта (signaturesTotal=${String(document.signaturesTotal ?? 'unknown')}, received=${signatures.length}, fields=${signatureFields})`,
-      );
+      throw new Error('Не задан ИИН первого подписанта');
     }
 
     return {
@@ -160,7 +143,6 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       providerDocumentId,
       providerSignId,
       signerIin,
-      certificateInfo: registeredSignature,
     };
   }
 
