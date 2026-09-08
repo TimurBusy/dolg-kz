@@ -31,7 +31,7 @@ export class LoanAgreementPdfService {
     const pdf = await PDFDocument.create();
     pdf.registerFontkit(fontkit);
 
-    const regular = await pdf.embedFont(await this.loadRoboto(), { subset: true });
+    const regular = await pdf.embedFont(await this.loadRoboto(), { subset: false });
     const bold = regular;
 
     let page = pdf.addPage([595.28, 841.89]);
