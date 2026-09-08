@@ -25,14 +25,15 @@ const require = createRequire(import.meta.url);
 
 @Injectable()
 export class LoanAgreementPdfService {
-  private fontBytes?: Promise<Buffer>;
+  private regularFontBytes?: Promise<Buffer>;
+  private boldFontBytes?: Promise<Buffer>;
 
   async generate(input: LoanAgreementInput) {
     const pdf = await PDFDocument.create();
     pdf.registerFontkit(fontkit);
 
-    const regular = await pdf.embedFont(await this.loadRoboto(), { subset: false });
-    const bold = regular;
+    const regular = await pdf.embedFont(await this.loadRegularFont(), { subset: true });
+    const bold = await pdf.embedFont(await this.loadBoldFont(), { subset: true });
 
     let page = pdf.addPage([595.28, 841.89]);
     let y = 790;
@@ -154,11 +155,19 @@ export class LoanAgreementPdfService {
     return Buffer.from(bytes);
   }
 
-  private loadRoboto() {
-    this.fontBytes ??= (async () => {
-      const path = require.resolve('@fontsource/roboto/files/roboto-cyrillic-400-normal.woff2');
+  private loadRegularFont() {
+    this.regularFontBytes ??= (async () => {
+      const path = require.resolve('dejavu-fonts-ttf/ttf/DejaVuSans.ttf');
       return readFile(path);
     })();
-    return this.fontBytes;
+    return this.regularFontBytes;
+  }
+
+  private loadBoldFont() {
+    this.boldFontBytes ??= (async () => {
+      const path = require.resolve('dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf');
+      return readFile(path);
+    })();
+    return this.boldFontBytes;
   }
 }
