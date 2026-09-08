@@ -231,10 +231,10 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       ...init,
       signal: AbortSignal.timeout(timeoutMs),
     });
-    const body = await response.json().catch(() => null);
+    const responseBody = await response.json().catch(() => null);
     if (!response.ok) {
       throw new Error(
-        body?.message ??
+        responseBody?.message ??
           `SIGEX HTTP ${response.status} ${response.statusText}`,
       );
     }
@@ -242,14 +242,14 @@ export class SigexSignatureProvider extends SignatureProviderPort {
   }
 
   private async binary(url: string, data: Buffer) {
-    const body = Uint8Array.from(data);
+    const payload = Uint8Array.from(data);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Content-Length': String(body.byteLength),
+        'Content-Length': String(payload.byteLength),
       },
-      body,
+      body: payload,
       signal: AbortSignal.timeout(60_000),
     });
     const body = await response.json().catch(() => null);
@@ -259,7 +259,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
           `SIGEX HTTP ${response.status} ${response.statusText}`,
       );
     }
-    return body;
+    return responseBody;
   }
 
   private safeSigexUrl(value: unknown) {
