@@ -237,6 +237,7 @@ model Signature {
   status              SignatureStatus   @default(CREATED)
   providerOperationId String?           @map("provider_operation_id")
   providerSignId      Int?              @map("provider_sign_id")
+  certificateInfo     Json?              @map("certificate_info")
   providerContext     Json?              @map("provider_context")
   qrCode              String?           @db.Text @map("qr_code")
   launchLink          String?           @db.Text @map("launch_link")
