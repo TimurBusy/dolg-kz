@@ -238,7 +238,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
           `SIGEX HTTP ${response.status} ${response.statusText}`,
       );
     }
-    return body as Json;
+    return responseBody as Json;
   }
 
   private async binary(url: string, data: Buffer) {
@@ -259,7 +259,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
           `SIGEX HTTP ${response.status} ${response.statusText}`,
       );
     }
-    return responseBody;
+    return body;
   }
 
   private safeSigexUrl(value: unknown) {
