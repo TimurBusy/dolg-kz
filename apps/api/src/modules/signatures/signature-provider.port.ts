@@ -16,6 +16,7 @@ export type FirstSigningCompletion =
       providerDocumentId: string;
       providerSignId: number;
       signerIin: string;
+      certificateInfo?: Record<string, unknown>;
     }
   | {
       status: 'CANCELED';
@@ -32,6 +33,7 @@ export type AdditionalSigningStatus = {
   status: 'PENDING' | 'SIGNED' | 'CANCELED' | 'FAILED';
   signerIin?: string;
   providerSignId?: number;
+  certificateInfo?: Record<string, unknown>;
   error?: string;
 };
 
