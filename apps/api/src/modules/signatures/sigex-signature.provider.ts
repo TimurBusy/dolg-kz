@@ -242,7 +242,17 @@ export class SigexSignatureProvider extends SignatureProviderPort {
 
     const providerSignId = Number(registration.signId);
     if (!Number.isFinite(providerSignId)) {
-      throw new Error('SIGEX не вернул идентификатор подписи заёмщика');
+      const providerMessage =
+        typeof registration.message === 'string'
+          ? registration.message
+          : typeof registration.error === 'string'
+            ? registration.error
+            : undefined;
+      throw new Error(
+        providerMessage
+          ? `SIGEX отклонил подпись заёмщика: ${providerMessage}`
+          : 'SIGEX не зарегистрировал подпись заёмщика. Проверьте, что в eGov Mobile подписывает именно владелец ИИН заёмщика, а не заимодатель.',
+      );
     }
 
     // The document was registered with strict + sequential signer requirements,
