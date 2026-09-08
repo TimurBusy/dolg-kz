@@ -1,15 +1,15 @@
 # Dolg.kz — Implementation Status
 
-Snapshot: 2026-09-07
+Snapshot: 2026-09-08
 
 ## Implemented
 
 ### Sprint 1 / Foundation — DOLG-001–010
 - npm workspaces monorepo
-- Next.js 16.3.3 web app
-- NestJS 12.0.1 API
+- Next.js web app
+- NestJS API
 - PostgreSQL + Redis docker-compose
-- Prisma 7.10 with PostgreSQL driver adapter
+- Prisma 7 with PostgreSQL driver adapter
 - Swagger at `/api/docs`
 - `/api/v1/health`
 - responsive app shell and UI primitives
@@ -24,28 +24,33 @@ Snapshot: 2026-09-07
 - session revocation
 - `/me` profile API
 - AES-256-GCM field encryption for IIN
-- deterministic IIN hash for future matching
+- deterministic IIN hash for matching
 - masked IIN output
 - login and profile pages
 
 ### Sprint 3 / Loans Core — DOLG-026–038
 - Loan, LoanTerms, LoanSequence models
 - human-readable contract numbers `DLG-YYYY-NNNNNN`
-- loan state machine definition
+- loan state machine
 - create / list / get / update / delete draft APIs
-- borrower linking by phone if already registered
+- borrower linking by phone
 - access control for loan parties
-- responsive loans list
-- 4-step create-loan wizard
-- loan details page
+- loans list, dashboard and create-loan wizard
+- active-route navigation
 
-## Verification performed in this environment
-- JSON configuration parsing: PASS
-- TS/TSX syntax transpilation check: PASS
-- `git diff --check`: PASS
+### Sprint 4 / Documents — DOLG-039–045
+- Document model, types, versions and statuses
+- S3-compatible document storage
+- local MinIO service
+- Cyrillic PDF loan agreement generation
+- SHA-256 document integrity hash
+- immutable loan terms after agreement generation
+- internal document lock operation for first signature
+- list / metadata / authenticated PDF download endpoints
+- generation moves loan to `WAITING_LENDER_SIGNATURE`
 
-## Not runtime-verified here
-The execution environment does not provide Docker and npm registry access timed out, so dependencies could not be installed and PostgreSQL/Redis containers could not be launched here. Run the documented local setup to perform full build, Prisma generation/migration and end-to-end tests.
+## Important alpha constraint
+The final PDF currently requires both lender and borrower to already have accounts with completed FIO + IIN profiles. The invitation/onboarding flow that links a new borrower is the next block (DOLG-055–058).
 
 ## Next implementation boundary
-DOLG-039–058: documents, immutable versions, PDF generation, signature provider abstraction, SIGEX/eGov signing and borrower invitations.
+DOLG-046–058: signature provider abstraction, SIGEX/eGov signing and borrower invitations.
