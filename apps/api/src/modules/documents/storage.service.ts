@@ -18,7 +18,7 @@ export class StorageService {
     this.bucket = this.config.get<string>('S3_BUCKET', 'dolg-documents');
     this.client = new S3Client({
       region: this.config.get<string>('S3_REGION', 'us-east-1'),
-      endpoint: this.config.get<string>('S3_ENDPOINT'),
+      endpoint: this.config.get<string>('S3_ENDPOINT', 'http://localhost:9000'),
       forcePathStyle: this.config.get<string>('S3_FORCE_PATH_STYLE', 'true') === 'true',
       credentials: {
         accessKeyId: this.config.get<string>('S3_ACCESS_KEY', 'dolg'),
