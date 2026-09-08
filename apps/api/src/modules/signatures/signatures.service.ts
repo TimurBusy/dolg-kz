@@ -209,7 +209,7 @@ export class SignaturesService {
             data: {
               status: 'SIGNED',
               providerSignId: providerStatus.providerSignId,
-              certificateInfo: providerStatus.certificateInfo,
+              certificateInfo: providerStatus.certificateInfo as any,
               qrCode: null,
               launchLink: null,
               signedAt: new Date(),
@@ -347,7 +347,7 @@ export class SignaturesService {
         data: {
           status: 'SIGNED',
           providerSignId: result.providerSignId,
-          certificateInfo: result.certificateInfo,
+          certificateInfo: result.certificateInfo as any,
           qrCode: null,
           launchLink: null,
           signedAt: new Date(),
