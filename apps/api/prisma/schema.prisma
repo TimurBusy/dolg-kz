@@ -56,6 +56,31 @@ enum DocumentStatus {
   VOIDED
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  EXPIRED
+}
+
+enum SignatureProvider {
+  SIGEX
+}
+
+enum SignatureRole {
+  LENDER
+  BORROWER
+}
+
+enum SignatureStatus {
+  CREATED
+  WAITING_FOR_USER
+  PROCESSING
+  SIGNED
+  CANCELED
+  FAILED
+}
+
 model User {
   id        String     @id @default(uuid()) @db.Uuid
   phone     String     @unique
@@ -68,6 +93,7 @@ model User {
   sessions        UserSession[]
   loansAsLender   Loan[] @relation("LoanLender")
   loansAsBorrower Loan[] @relation("LoanBorrower")
+  signatures      Signature[]
 
   @@map("users")
 }
@@ -139,7 +165,8 @@ model Loan {
   lender    User       @relation("LoanLender", fields: [lenderId], references: [id], onDelete: Restrict)
   borrower  User?      @relation("LoanBorrower", fields: [borrowerId], references: [id], onDelete: SetNull)
   terms     LoanTerms?
-  documents Document[]
+  documents   Document[]
+  invitations LoanInvitation[]
 
   @@index([lenderId, status])
   @@index([borrowerId, status])
@@ -168,16 +195,63 @@ model Document {
   version    Int            @default(1)
   fileKey    String         @map("file_key")
   sha256Hash String         @map("sha256_hash")
-  status     DocumentStatus @default(GENERATED)
-  lockedAt   DateTime?      @map("locked_at")
+  status             DocumentStatus @default(GENERATED)
+  providerDocumentId String?        @unique @map("provider_document_id")
+  lockedAt           DateTime?      @map("locked_at")
   createdAt  DateTime       @default(now()) @map("created_at")
   updatedAt  DateTime       @updatedAt @map("updated_at")
 
-  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  loan       Loan        @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  signatures Signature[]
 
   @@unique([loanId, type, version])
   @@index([loanId, createdAt])
   @@map("documents")
+}
+
+model LoanInvitation {
+  id               String           @id @default(uuid()) @db.Uuid
+  loanId           String           @map("loan_id") @db.Uuid
+  phone            String
+  tokenHash        String           @unique @map("token_hash")
+  status           InvitationStatus @default(PENDING)
+  acceptedByUserId String?          @map("accepted_by_user_id") @db.Uuid
+  expiresAt        DateTime         @map("expires_at")
+  acceptedAt       DateTime?        @map("accepted_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId, status])
+  @@index([phone, status])
+  @@map("loan_invitations")
+}
+
+model Signature {
+  id                  String            @id @default(uuid()) @db.Uuid
+  documentId          String            @map("document_id") @db.Uuid
+  userId              String            @map("user_id") @db.Uuid
+  provider            SignatureProvider @default(SIGEX)
+  role                SignatureRole
+  status              SignatureStatus   @default(CREATED)
+  providerOperationId String?           @map("provider_operation_id")
+  providerSignId      Int?              @map("provider_sign_id")
+  providerContext     Json?              @map("provider_context")
+  qrCode              String?           @db.Text @map("qr_code")
+  launchLink          String?           @db.Text @map("launch_link")
+  expireAt            DateTime?         @map("expire_at")
+  error               String?           @db.Text
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  signedAt            DateTime?         @map("signed_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([documentId, role, createdAt])
+  @@index([userId, status])
+  @@map("signatures")
 }
 
 model LoanSequence {
