@@ -3,12 +3,10 @@ import {
   Get,
   Param,
   Post,
-  Res,
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiProduces, ApiTags } from '@nestjs/swagger';
-import type { Response } from 'express';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator.js';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard.js';
 import { DocumentsService } from './documents.service.js';
@@ -40,7 +38,6 @@ export class DocumentsController {
   async file(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
-    @Res({ passthrough: true }) response: Response,
   ) {
     const { document, body } = await this.documents.file(user.userId, id);
 
