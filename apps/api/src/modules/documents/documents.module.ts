@@ -15,6 +15,6 @@ import { StorageService } from './storage.service.js';
     StorageService,
     AccessTokenGuard,
   ],
-  exports: [DocumentsService],
+  exports: [DocumentsService, StorageService],
 })
 export class DocumentsModule {}
