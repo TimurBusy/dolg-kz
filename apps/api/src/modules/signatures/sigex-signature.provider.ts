@@ -121,8 +121,37 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       }),
     });
 
-    const providerDocumentId = String(registration.documentId);
-    const providerSignId = Number(registration.signId);
+    let providerDocumentId =
+      typeof registration.documentId === 'string'
+        ? registration.documentId.trim()
+        : '';
+    let providerSignId = Number(registration.signId);
+
+    // Some SIGEX responses may omit identifiers even after accepting a CMS
+    // signature. Recover them from the signature itself instead of ever
+    // persisting String(undefined) as a provider document id.
+    if (!providerDocumentId || !Number.isFinite(providerSignId)) {
+      const exported = await this.json(`${this.baseUrl}/api/exported`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signType: 'cms',
+          signature,
+        }),
+      });
+
+      providerDocumentId =
+        typeof exported.documentId === 'string'
+          ? exported.documentId.trim()
+          : '';
+      providerSignId = Number(exported.signId);
+    }
+
+    if (!providerDocumentId || !Number.isFinite(providerSignId)) {
+      throw new Error(
+        'SIGEX зарегистрировал подпись, но не вернул корректные идентификаторы документа и подписи',
+      );
+    }
 
     await this.binary(
       `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}/data`,
