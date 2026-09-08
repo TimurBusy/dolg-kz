@@ -26,8 +26,22 @@ export type AdditionalSigningLaunch = {
   expireAt: Date;
   qrCode: string;
   launchLink: string;
-  operationId: string;
+  context: {
+    dataUrl: string;
+    signUrl: string;
+  };
 };
+
+export type AdditionalSigningCompletion =
+  | {
+      status: 'SIGNED';
+      providerSignId: number;
+      signerIin: string;
+      certificateInfo?: Record<string, unknown>;
+    }
+  | {
+      status: 'CANCELED';
+    };
 
 export type AdditionalSigningStatus = {
   status: 'PENDING' | 'SIGNED' | 'CANCELED' | 'FAILED';
@@ -58,6 +72,15 @@ export abstract class SignatureProviderPort {
     backUrl: string;
     meta: SigningMeta;
   }): Promise<AdditionalSigningLaunch>;
+
+  abstract completeAdditionalOperation(input: {
+    context: AdditionalSigningLaunch['context'];
+    file: Buffer;
+    providerDocumentId: string;
+    title: string;
+    meta: SigningMeta;
+    expectedSignerIin: string;
+  }): Promise<AdditionalSigningCompletion>;
 
   abstract getAdditionalOperationStatus(input: {
     providerDocumentId: string;
