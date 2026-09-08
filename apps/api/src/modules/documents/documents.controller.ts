@@ -4,6 +4,7 @@ import {
   Param,
   Post,
   Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiProduces, ApiTags } from '@nestjs/swagger';
@@ -42,12 +43,11 @@ export class DocumentsController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const { document, body } = await this.documents.file(user.userId, id);
-    response.setHeader('Content-Type', 'application/pdf');
-    response.setHeader(
-      'Content-Disposition',
-      `inline; filename="${document.type.toLowerCase()}-v${document.version}.pdf"`,
-    );
-    response.setHeader('Content-Length', body.length.toString());
-    return body;
+
+    return new StreamableFile(body, {
+      type: 'application/pdf',
+      disposition: `inline; filename="${document.type.toLowerCase()}-v${document.version}.pdf"`,
+      length: body.length,
+    });
   }
 }
