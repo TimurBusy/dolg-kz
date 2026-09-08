@@ -105,7 +105,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
         signType: 'cms',
         signature,
         settings: {
-          private: false,
+          private: true,
           signaturesLimit: 2,
           switchToPrivateAfterLimitReached: true,
           unique: ['iin'],
@@ -147,6 +147,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       providerDocumentId,
       providerSignId,
       signerIin,
+      certificateInfo: registeredSignature,
     };
   }
 
@@ -188,11 +189,21 @@ export class SigexSignatureProvider extends SignatureProviderPort {
 
     const status = String(response.status ?? '').toLowerCase();
     if (status === 'done') {
+      const providerSignId =
+        response.signId == null ? undefined : Number(response.signId);
+      const document = await this.json(
+        `${this.baseUrl}/api/${encodeURIComponent(input.providerDocumentId)}`,
+        { method: 'GET' },
+      );
+      const certificateInfo = document.signatures?.find(
+        (item: Json) => Number(item.signId) === providerSignId,
+      );
+
       return {
         status: 'SIGNED',
         signerIin: this.normalizeIin(response.userId),
-        providerSignId:
-          response.signId == null ? undefined : Number(response.signId),
+        providerSignId,
+        certificateInfo,
       };
     }
     if (status === 'canceled' || status === 'canceledfromegov') {
