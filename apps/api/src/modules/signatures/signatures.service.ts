@@ -127,11 +127,15 @@ export class SignaturesService {
         userId,
         role,
         status: 'WAITING_FOR_USER',
-        providerOperationId: launch.operationId,
+        providerContext: launch.context,
         qrCode: launch.qrCode,
         launchLink: launch.launchLink,
         expireAt: launch.expireAt,
       },
+    });
+
+    void this.finishBorrowerSignature(signature.id).catch(async (error) => {
+      await this.failSignature(signature.id, error);
     });
 
     return this.publicSignature(signature);
@@ -356,6 +360,111 @@ export class SignaturesService {
       this.prisma.loan.update({
         where: { id: loan.id },
         data: { status: 'WAITING_BORROWER_SIGNATURE' },
+      }),
+    ]);
+  }
+
+  private async finishBorrowerSignature(signatureId: string) {
+    const signature = await this.prisma.signature.findUnique({
+      where: { id: signatureId },
+      include: {
+        document: {
+          include: {
+            loan: {
+              include: {
+                lender: { include: { identity: true } },
+                borrower: { include: { identity: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!signature) return;
+
+    await this.prisma.signature.update({
+      where: { id: signatureId },
+      data: { status: 'PROCESSING' },
+    });
+
+    const context = signature.providerContext as
+      | { dataUrl?: string; signUrl?: string }
+      | null;
+    if (!context?.dataUrl || !context.signUrl) {
+      throw new Error('Утерян контекст операции SIGEX для заёмщика');
+    }
+
+    const providerDocumentId = signature.document.providerDocumentId;
+    if (!providerDocumentId) {
+      throw new Error('Документ не зарегистрирован в SIGEX');
+    }
+
+    const borrowerIdentity = signature.document.loan.borrower?.identity;
+    if (!borrowerIdentity?.iinEncrypted) {
+      throw new Error('У заёмщика отсутствует ИИН');
+    }
+
+    const borrowerIin = this.decrypt(borrowerIdentity.iinEncrypted);
+    const loan = signature.document.loan;
+    const { body } = await this.documents.file(
+      signature.userId,
+      signature.documentId,
+    );
+
+    const result = await this.provider.completeAdditionalOperation({
+      context: {
+        dataUrl: context.dataUrl,
+        signUrl: context.signUrl,
+      },
+      file: body,
+      providerDocumentId,
+      title: `Договор займа ${loan.number}`,
+      meta: [
+        { name: 'Номер договора', value: loan.number },
+        {
+          name: 'Сумма',
+          value: `${Number(loan.principalAmount).toLocaleString('ru-RU')} ${loan.currency}`,
+        },
+      ],
+      expectedSignerIin: borrowerIin,
+    });
+
+    if (result.status === 'CANCELED') {
+      await this.prisma.signature.update({
+        where: { id: signature.id },
+        data: {
+          status: 'CANCELED',
+          qrCode: null,
+          launchLink: null,
+        },
+      });
+      return;
+    }
+
+    if (result.signerIin !== borrowerIin) {
+      throw new Error('Вторую подпись поставил не заёмщик');
+    }
+
+    assertLoanTransition(loan.status, 'SIGNED');
+    await this.prisma.$transaction([
+      this.prisma.document.update({
+        where: { id: signature.documentId },
+        data: { status: 'SIGNED' },
+      }),
+      this.prisma.signature.update({
+        where: { id: signature.id },
+        data: {
+          status: 'SIGNED',
+          providerSignId: result.providerSignId,
+          certificateInfo: result.certificateInfo as any,
+          qrCode: null,
+          launchLink: null,
+          signedAt: new Date(),
+        },
+      }),
+      this.prisma.loan.update({
+        where: { id: loan.id },
+        data: { status: 'SIGNED' },
       }),
     ]);
   }
