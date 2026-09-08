@@ -110,6 +110,7 @@ export class SigexSignatureProvider extends SignatureProviderPort {
           switchToPrivateAfterLimitReached: true,
           unique: ['iin'],
           strictSignersRequirements: true,
+          sequentialSignersRequirements: true,
           signersRequirements: input.signerIins.map((iin) => ({
             iin: `IIN${iin}`,
           })),
