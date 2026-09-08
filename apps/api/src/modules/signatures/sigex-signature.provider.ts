@@ -123,23 +123,36 @@ export class SigexSignatureProvider extends SignatureProviderPort {
     const providerDocumentId = String(registration.documentId);
     const providerSignId = Number(registration.signId);
 
-    await this.binary(
+    const dataRegistration = await this.binary(
       `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}/data`,
       input.file,
     );
 
+    // According to SIGEX docs, the first block of signatures must be requested
+    // without lastSignId. Passing lastSignId=0 can skip the first signature on
+    // deployments where the first signId is zero.
     const document = await this.json(
-      `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}?lastSignId=0`,
+      `${this.baseUrl}/api/${encodeURIComponent(providerDocumentId)}`,
       { method: 'GET' },
     );
+    const signatures = Array.isArray(document.signatures) ? document.signatures : [];
     const registeredSignature =
-      document.signatures?.find(
+      signatures.find(
         (item: Json) => Number(item.signId) === providerSignId,
-      ) ?? document.signatures?.[0];
+      ) ?? signatures[0];
 
-    const signerIin = this.extractSignerIin(registeredSignature);
+    const signerIin =
+      this.extractSignerIin(registeredSignature) ??
+      this.normalizeIin(registration.automaticallyCreatedUserSettings?.userId) ??
+      this.normalizeIin(dataRegistration.automaticallyCreatedUserSettings?.userId);
+
     if (!signerIin) {
-      throw new Error('SIGEX не вернул распознаваемый ИИН первого подписанта');
+      const signatureFields = registeredSignature
+        ? Object.keys(registeredSignature).sort().join(',')
+        : 'none';
+      throw new Error(
+        `SIGEX не вернул распознаваемый ИИН первого подписанта (signaturesTotal=${String(document.signaturesTotal ?? 'unknown')}, received=${signatures.length}, fields=${signatureFields})`,
+      );
     }
 
     return {
