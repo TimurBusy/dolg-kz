@@ -121,35 +121,32 @@ export class SigexSignatureProvider extends SignatureProviderPort {
       }),
     });
 
-    let providerDocumentId =
+    const providerDocumentId =
       typeof registration.documentId === 'string'
         ? registration.documentId.trim()
         : '';
-    let providerSignId = Number(registration.signId);
+    const providerSignId = Number(registration.signId);
 
-    // Some SIGEX responses may omit identifiers even after accepting a CMS
-    // signature. Recover them from the signature itself instead of ever
-    // persisting String(undefined) as a provider document id.
+    // A successful POST /api returns both documentId and signId. If they are
+    // missing, SIGEX returned an application-level error payload (which may
+    // still come with HTTP 200), so surface that message instead of treating
+    // it as a successful registration.
     if (!providerDocumentId || !Number.isFinite(providerSignId)) {
-      const exported = await this.json(`${this.baseUrl}/api/exported`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signType: 'cms',
-          signature,
-        }),
-      });
-
-      providerDocumentId =
-        typeof exported.documentId === 'string'
-          ? exported.documentId.trim()
+      const providerMessage =
+        typeof registration.message === 'string'
+          ? registration.message
+          : typeof registration.error === 'string'
+            ? registration.error
+            : undefined;
+      const requestId =
+        typeof registration.requestID === 'string'
+          ? ` (requestID: ${registration.requestID})`
           : '';
-      providerSignId = Number(exported.signId);
-    }
 
-    if (!providerDocumentId || !Number.isFinite(providerSignId)) {
       throw new Error(
-        'SIGEX зарегистрировал подпись, но не вернул корректные идентификаторы документа и подписи',
+        providerMessage
+          ? `SIGEX отклонил регистрацию первой подписи: ${providerMessage}${requestId}`
+          : 'SIGEX не зарегистрировал первую подпись и не вернул documentId/signId',
       );
     }
 
