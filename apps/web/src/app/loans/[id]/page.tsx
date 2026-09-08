@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import { InvitationCard } from '@/components/loans/invitation-card';
+import {
+  SignaturePanel,
+  type AgreementDocument,
+} from '@/components/signing/signature-panel';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +17,8 @@ import { getAuth } from '@/lib/auth-store';
 type Loan = {
   id: string;
   number: string;
+  lenderId: string;
+  borrowerId: string | null;
   borrowerPhone: string;
   principalAmount: number;
   remainingAmount: number;
@@ -23,13 +30,11 @@ type Loan = {
   };
 };
 
-type DocumentRecord = {
-  id: string;
+type DocumentRecord = AgreementDocument & {
   loanId: string;
   type: string;
   version: number;
   sha256Hash: string;
-  status: string;
   lockedAt: string | null;
   createdAt: string;
 };
@@ -59,6 +64,7 @@ export default function LoanPage() {
       ]);
       setLoan(loanData);
       setDocuments(documentData);
+      setError('');
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -127,12 +133,16 @@ export default function LoanPage() {
   if (loading || !loan) {
     return (
       <AppShell>
-        <div className="p-8 text-sm text-[var(--muted)]">Загрузка…</div>
+        <div className="p-8 text-sm text-[var(--muted)]">
+          {error || 'Загрузка…'}
+        </div>
       </AppShell>
     );
   }
 
-  const agreement = documents.find((document) => document.type === 'LOAN_AGREEMENT');
+  const agreement = documents.find(
+    (document) => document.type === 'LOAN_AGREEMENT',
+  );
 
   return (
     <AppShell>
@@ -178,6 +188,13 @@ export default function LoanPage() {
           </div>
         </Card>
 
+        <InvitationCard
+          loanId={loan.id}
+          borrowerId={loan.borrowerId}
+          status={loan.status}
+          onLinked={() => void load()}
+        />
+
         <Card className="mt-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -187,7 +204,7 @@ export default function LoanPage() {
                 фиксируется в базе.
               </p>
             </div>
-            {!agreement && loan.status === 'DRAFT' ? (
+            {!agreement && loan.status === 'DRAFT' && loan.borrowerId ? (
               <Button onClick={generateAgreement} disabled={generating}>
                 {generating ? (
                   <>
@@ -209,8 +226,9 @@ export default function LoanPage() {
 
           {documents.length === 0 ? (
             <div className="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-[var(--muted)]">
-              Документов пока нет. Для финального договора обе стороны должны
-              зарегистрироваться и заполнить ФИО + ИИН.
+              {!loan.borrowerId
+                ? 'Сначала пригласите заёмщика и дождитесь, пока он войдёт в Dolg.kz.'
+                : 'Документов пока нет. Для финального договора обе стороны должны заполнить ФИО + ИИН.'}
             </div>
           ) : (
             <div className="mt-5 space-y-3">
@@ -246,10 +264,24 @@ export default function LoanPage() {
           )}
         </Card>
 
-        {loan.status === 'WAITING_LENDER_SIGNATURE' ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            Договор сформирован. Следующий шаг — подключить подпись
-            заимодателя через eGov/SIGEX.
+        {agreement ? (
+          <SignaturePanel
+            loan={{
+              id: loan.id,
+              number: loan.number,
+              lenderId: loan.lenderId,
+              borrowerId: loan.borrowerId,
+              status: loan.status,
+            }}
+            agreement={agreement}
+            onChanged={load}
+          />
+        ) : null}
+
+        {loan.status === 'SIGNED' ? (
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            Обе подписи зарегистрированы. Следующий блок разработки — передача
+            денег и подтверждение получения.
           </div>
         ) : null}
       </div>
