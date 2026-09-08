@@ -5,6 +5,9 @@ on:
     branches: [main, develop]
   pull_request:
 
+env:
+  DATABASE_URL: postgresql://dolg:dolg_ci_password@localhost:5432/dolg?schema=public
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.18.0
+          node-version: 22.22.3
       - run: npm install
       - run: npm run db:generate
       - run: npm run lint
