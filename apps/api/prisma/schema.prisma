@@ -64,6 +64,7 @@ enum InvitationStatus {
 }
 
 enum SignatureProvider {
+  EGOV
   SIGEX
 }
 
@@ -232,12 +233,13 @@ model Signature {
   id                  String            @id @default(uuid()) @db.Uuid
   documentId          String            @map("document_id") @db.Uuid
   userId              String            @map("user_id") @db.Uuid
-  provider            SignatureProvider @default(SIGEX)
+  provider            SignatureProvider @default(EGOV)
   role                SignatureRole
   status              SignatureStatus   @default(CREATED)
   providerOperationId String?           @map("provider_operation_id")
   providerSignId      Int?              @map("provider_sign_id")
   certificateInfo     Json?              @map("certificate_info")
+  cmsSignature        String?            @db.Text @map("cms_signature")
   providerContext     Json?              @map("provider_context")
   qrCode              String?           @db.Text @map("qr_code")
   launchLink          String?           @db.Text @map("launch_link")

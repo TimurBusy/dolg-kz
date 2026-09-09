@@ -6,17 +6,20 @@ import { SignatureProviderPort } from './signature-provider.port.js';
 import { SigexSignatureProvider } from './sigex-signature.provider.js';
 import { SignaturesController } from './signatures.controller.js';
 import { SignaturesService } from './signatures.service.js';
+import { EgovSignatureProvider } from './egov-signature.provider.js';
 
 @Module({
   imports: [AuthModule, DocumentsModule],
   controllers: [SignaturesController],
   providers: [
-    SignaturesService,
-    AccessTokenGuard,
-    {
-      provide: SignatureProviderPort,
-      useClass: SigexSignatureProvider,
-    },
-  ],
+  SignaturesService,
+  AccessTokenGuard,
+  SigexSignatureProvider,
+  EgovSignatureProvider,
+  {
+    provide: SignatureProviderPort,
+    useClass: EgovSignatureProvider,
+  },
+],
 })
 export class SignaturesModule {}
